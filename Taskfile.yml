@@ -1,0 +1,18 @@
+version: 3
+
+tasks:
+  lint:
+    desc: Lint the code
+    cmds:
+        - golangci-lint run
+
+  test:
+    desc: Test the code
+    cmds:
+      - go test ./...
+
+  workflow:
+    desc: Run GitHub Actions workflow
+    cmds:
+      - task: lint
+      - task: test

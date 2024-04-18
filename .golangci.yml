@@ -1,0 +1,9 @@
+linters:
+  enable:
+    - gci
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
