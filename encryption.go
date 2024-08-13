@@ -7,11 +7,13 @@ import (
 	"crypto/ecdh"
 	"crypto/rand"
 	"encoding/binary"
+	"sync"
 )
 
 type encryption struct {
 	publicKey  []byte
 	privateKey *ecdh.PrivateKey
+	mu         sync.RWMutex
 }
 
 func newEncryption() (*encryption, error) {
@@ -28,9 +30,25 @@ func newEncryption() (*encryption, error) {
 	}, nil
 }
 
-// TODO: Add keys rotation
+func (e *encryption) rotate() error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	privateKey, err := ecdh.P256().GenerateKey(rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	e.privateKey = privateKey
+	e.publicKey = privateKey.PublicKey().Bytes()
+
+	return nil
+}
 
 func (e *encryption) encryptMessage(auth, p256dh string, message []byte) (*bytes.Buffer, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	authSecretDecoded, err := parsBase64Key(auth)
 	if err != nil {
 		return nil, err
