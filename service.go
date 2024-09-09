@@ -40,7 +40,7 @@ func (s *Service) Send(endpoint, auth, p256dh string, message []byte, urgency Ur
 		return err
 	}
 
-	if err := s.sendMessage(endpoint, urgency, ttl, body); err != nil {
+	if err = s.sendMessage(endpoint, urgency, ttl, body); err != nil {
 		return err
 	}
 

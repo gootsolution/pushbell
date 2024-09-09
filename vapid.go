@@ -59,6 +59,8 @@ func newVAPID(asPrivateKey, asPublicKey, asSubject string) (*vapid, error) {
 		return nil, err
 	}
 
+	jwt.MarshalSingleStringAsArray = false
+
 	return &vapid{
 		asPublicKey:  asPublicKey,
 		asPrivateKey: privateECDSA.(*ecdsa.PrivateKey),
