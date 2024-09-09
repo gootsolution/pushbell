@@ -1,6 +1,7 @@
 linters:
   enable:
     - gci
+    - typecheck
 
 linters-settings:
   gci:
