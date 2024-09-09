@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test your application server VAPID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<div class="w-full max-w-lg bg-white rounded-lg shadow-md p-8">
+    <h1 class="text-2xl font-bold text-center mb-6">Test your application server VAPID</h1>
+
+    <form id="form" class="space-y-6">
+        <div>
+            <label for="input" class="block text-lg font-medium text-gray-700">Enter your VAPID key:</label>
+            <input type="text" id="input" name="key" placeholder="Paste your key"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm">
+        </div>
+        <div class="text-center">
+            <button type="submit"
+                    class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Install
+            </button>
+        </div>
+    </form>
+
+    <div id="output" class="mt-6 p-4 bg-gray-100 border border-gray-300 rounded-md min-h-[50px] text-gray-700">
+        Your subscription info will be here...
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById("form")
+    const output = document.getElementById('output');
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const asKey = new FormData(form).get("key")
+
+        await navigator.serviceWorker.register("sw.js")
+        const registration = await navigator.serviceWorker.ready
+
+        let subscription = await registration.pushManager.getSubscription()
+        if (subscription) {
+            await subscription.unsubscribe()
+        }
+
+        subscription = await registration.pushManager.subscribe({
+            applicationServerKey: asKey.toString(),
+            userVisibleOnly: true
+        })
+
+        output.textContent = JSON.stringify(subscription.toJSON(), null, 2)
+
+        console.log(event)
+        console.log(asKey)
+    })
+</script>
+
+</body>
+</html>

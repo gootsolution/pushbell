@@ -1,0 +1,24 @@
+name: deploy pages
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup pages
+        uses: actions/configure-pages@v5
+      - name: upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './web'
+      - name: deploy to github pages
+        uses: actions/deploy-pages@v4
+
