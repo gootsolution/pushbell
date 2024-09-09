@@ -1,4 +1,4 @@
-name: main
+name: lint and test
 on:
   push:
     branches:
@@ -14,7 +14,7 @@ jobs:
       - name: setup go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.23"
           cache: false
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v4
@@ -28,7 +28,7 @@ jobs:
       - name: setup go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: "1.23"
           cache: false
       - name: test
         run: go test ./...

@@ -21,7 +21,7 @@ type vapid struct {
 
 var ErrSubjectNotValid = errors.New("subject VAPID should be either a \"mailto:\" (email) or a \"https:\" URI")
 
-func newVAPID(asPublicKey, asPrivateKey, asSubject string) (*vapid, error) {
+func newVAPID(asPrivateKey, asPublicKey, asSubject string) (*vapid, error) {
 	if !strings.HasPrefix(asSubject, "mailto:") &&
 		!strings.HasPrefix(asSubject, "https:") {
 		return nil, ErrSubjectNotValid
@@ -54,14 +54,14 @@ func newVAPID(asPublicKey, asPrivateKey, asSubject string) (*vapid, error) {
 		return nil, err
 	}
 
-	privateECDSA, err := x509.ParseECPrivateKey(privatePKCS8)
+	privateECDSA, err := x509.ParsePKCS8PrivateKey(privatePKCS8)
 	if err != nil {
 		return nil, err
 	}
 
 	return &vapid{
 		asPublicKey:  asPublicKey,
-		asPrivateKey: privateECDSA,
+		asPrivateKey: privateECDSA.(*ecdsa.PrivateKey),
 	}, nil
 }
 

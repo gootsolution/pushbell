@@ -123,6 +123,9 @@ func (e *encryption) messageBody(buf *bytes.Buffer, uaPublicKey, authSecret, sha
 	// PRK = HMAC-SHA-256(auth_secret, ecdh_secret)
 	// IKM = HKDF-Expand(PRK, key_info, 32)
 	ikm, err := hkdfExtractAndExpand(32, sharedSecret, authSecret, keyInfo)
+	if err != nil {
+		return err
+	}
 
 	// Generate cek_info according to RFC8291 3.4:
 	cekInfo := []byte("Content-Encoding: aes128gcm\x00")
@@ -133,6 +136,9 @@ func (e *encryption) messageBody(buf *bytes.Buffer, uaPublicKey, authSecret, sha
 	// PRK = HMAC-SHA-256(salt, IKM)
 	// CEK = HMAC-SHA-256(PRK, cek_info || 0x01)[0..15]
 	cek, err := hkdfExtractAndExpand(16, ikm, salt, cekInfo)
+	if err != nil {
+		return err
+	}
 
 	// Generate nonce_info according to RFC8291 3.4:
 	nonceInfo := []byte("Content-Encoding: nonce\x00")
@@ -143,6 +149,9 @@ func (e *encryption) messageBody(buf *bytes.Buffer, uaPublicKey, authSecret, sha
 	// PRK = HMAC-SHA-256(salt, IKM)
 	// NONCE = HMAC-SHA-256(PRK, nonce_info || 0x01)[0..11]
 	nonce, err := hkdfExtractAndExpand(12, ikm, salt, nonceInfo)
+	if err != nil {
+		return err
+	}
 
 	// Cipher block
 	c, err := aes.NewCipher(cek)

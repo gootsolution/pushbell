@@ -9,8 +9,6 @@ import (
 )
 
 func Test_parsBase64Key(t *testing.T) {
-	a := assert.New(t)
-
 	hexToBytes := func(h string) []byte {
 		data, _ := hex.DecodeString(h)
 
@@ -20,6 +18,7 @@ func Test_parsBase64Key(t *testing.T) {
 	type args struct {
 		keyString string
 	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -27,7 +26,7 @@ func Test_parsBase64Key(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "auth parsing padded",
+			name: "AuthParsingPadded",
 			args: args{
 				"zqyr_PRwQSvvrsytQ9-0YA==",
 			},
@@ -35,7 +34,7 @@ func Test_parsBase64Key(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "auth parsing raw",
+			name: "AuthParsingRaw",
 			args: args{
 				"gBOK-LZkbIYkL5zU0brnPg",
 			},
@@ -43,7 +42,7 @@ func Test_parsBase64Key(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "p256dh parsing padded",
+			name: "P256dhParsingPadded",
 			args: args{
 				"BGqW7OPnFArDJMIct3mAC77Eb7PqkgdknuZ2WDCCS5WmLfJopkScXEvla8qxvP19VpONJmHoN1V-00CcTjEM_Lo=",
 			},
@@ -51,7 +50,7 @@ func Test_parsBase64Key(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "p256dh parsing raw",
+			name: "P256dhParsingRaw",
 			args: args{
 				"BEdvn_bbHUa78RGuOP9M7qv2y9DSAVvdRkV7hbvXEKt1k_ja4_x1JQeMJ5bLji0qDDoF4Zk7qR1RKO9k3ChOV3c",
 			},
@@ -61,12 +60,12 @@ func Test_parsBase64Key(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parsBase64Key(tt.args.keyString)
+			result, err := parsBase64Key(tt.args.keyString)
 			if !tt.wantErr(t, err, fmt.Sprintf("parsBase64Key(%v)", tt.args.keyString)) {
 				return
 			}
 
-			a.Equal(tt.want, got, "should be equal")
+			assert.Equal(t, tt.want, result, "should be equal")
 		})
 	}
 }

@@ -1,15 +1,22 @@
 version: 3
 
 tasks:
+  cover:
+    desc: Show coverage
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out
+      - rm coverage.out
+
   lint:
     desc: Lint the code
     cmds:
-        - golangci-lint run
+      - golangci-lint run
 
   test:
     desc: Test the code
     cmds:
-      - go test ./...
+      - go test -cover ./...
 
   workflow:
     desc: Run GitHub Actions workflow

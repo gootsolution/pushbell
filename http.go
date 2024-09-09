@@ -2,6 +2,7 @@ package pushbell
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	"time"
 
@@ -10,12 +11,47 @@ import (
 
 var httpClient = &fasthttp.Client{}
 
-// TODO: make status code mapping
+var (
+	ErrPushBadRequest          = errors.New("bad request: check the subscription data and message format")
+	ErrPushUnauthorized        = errors.New("unauthorized: the request requires authentication")
+	ErrPushForbidden           = errors.New("forbidden: the server understood the request, but is refusing to fulfill it")
+	ErrPushNotFound            = errors.New("subscription not found: the user may have unsubscribed or the subscription may have expired")
+	ErrPushGone                = errors.New("subscription is no longer active: delete it from the server")
+	ErrPushTooManyRequests     = errors.New("too many requests: try again later")
+	ErrPushInternalServerError = errors.New("internal server error: try again later")
+	ErrPushServiceUnavailable  = errors.New("service unavailable: try again later")
+	ErrPushUnexpectedResponse  = errors.New("unexpected response from the server")
+)
 
-func (s *Service) sendMessage(body *bytes.Buffer, endpoint string, urgency Urgency, ttl time.Duration) (int, error) {
+func handleStatusCode(statusCode int) error {
+	switch statusCode {
+	case fasthttp.StatusOK, fasthttp.StatusCreated, fasthttp.StatusAccepted:
+		return nil
+	case fasthttp.StatusBadRequest:
+		return ErrPushBadRequest
+	case fasthttp.StatusUnauthorized:
+		return ErrPushUnauthorized
+	case fasthttp.StatusForbidden:
+		return ErrPushForbidden
+	case fasthttp.StatusNotFound:
+		return ErrPushNotFound
+	case fasthttp.StatusGone:
+		return ErrPushGone
+	case fasthttp.StatusTooManyRequests:
+		return ErrPushTooManyRequests
+	case fasthttp.StatusInternalServerError:
+		return ErrPushInternalServerError
+	case fasthttp.StatusServiceUnavailable:
+		return ErrPushServiceUnavailable
+	default:
+		return ErrPushUnexpectedResponse
+	}
+}
+
+func (s *Service) sendMessage(endpoint string, urgency Urgency, ttl time.Duration, body *bytes.Buffer) error {
 	vapidAuth, err := s.vapid.header(endpoint)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	req := fasthttp.AcquireRequest()
@@ -37,8 +73,8 @@ func (s *Service) sendMessage(body *bytes.Buffer, endpoint string, urgency Urgen
 	req.SetBody(body.Bytes())
 
 	if err = httpClient.Do(req, resp); err != nil {
-		return resp.StatusCode(), err
+		return err
 	}
 
-	return resp.StatusCode(), nil
+	return handleStatusCode(resp.StatusCode())
 }

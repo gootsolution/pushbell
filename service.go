@@ -1,3 +1,7 @@
+// Package pushbell provides function for sending web push notifications with
+// support for the VAPID (Voluntary Application Server Identification)
+// specification.
+
 package pushbell
 
 import (
@@ -10,11 +14,11 @@ import (
 type Service struct {
 	vapid      *vapid
 	encryption *encryption
-	logger     *slog.Logger
 }
 
-func NewService(asPublicKey, asPrivateKey, asSubject string) (*Service, error) {
-	v, err := newVAPID(asPublicKey, asPrivateKey, asSubject)
+// New creates new service with given application server keys and subject.
+func New(asPrivateKey, asPublicKey, asSubject string) (*Service, error) {
+	v, err := newVAPID(asPrivateKey, asPublicKey, asSubject)
 	if err != nil {
 		return nil, err
 	}
@@ -30,36 +34,31 @@ func NewService(asPublicKey, asPrivateKey, asSubject string) (*Service, error) {
 	}, nil
 }
 
-func (s *Service) Send(endpoint, auth, p256dh string, message []byte, urgency Urgency, ttl time.Duration) (int, error) {
+func (s *Service) Send(endpoint, auth, p256dh string, message []byte, urgency Urgency, ttl time.Duration) error {
 	body, err := s.encryption.encryptMessage(auth, p256dh, message)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	code, err := s.sendMessage(body, endpoint, urgency, ttl)
-	if err != nil {
-		return 0, err
+	if err := s.sendMessage(endpoint, urgency, ttl, body); err != nil {
+		return err
 	}
 
-	return code, nil
+	return nil
 }
 
-func (s *Service) WithLogger(logger *slog.Logger) {
-	s.logger = logger
-}
-
-func (s *Service) WithRotation(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour)
+func (s *Service) WithRotation(ctx context.Context, duration time.Duration, logger *slog.Logger) {
+	ticker := time.NewTicker(duration)
 
 	go func(ctx context.Context, ticker *time.Ticker) {
 		for {
 			select {
 			case <-ticker.C:
 				if err := s.encryption.rotate(); err != nil {
-					if s.logger != nil {
+					if logger != nil {
 						log.Printf("error while rotating keys: %v", err)
 					} else {
-						s.logger.Error("error while rotating keys", slog.String("err", err.Error()))
+						logger.Error("error while rotating keys", slog.String("err", err.Error()))
 					}
 				}
 			case <-ctx.Done():
