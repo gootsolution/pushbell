@@ -30,46 +30,49 @@ go get -u github.com/gootsolution/pushbell
 package main
 
 import (
-  "errors"
-  "log"
-  "time"
+	"errors"
+	"log"
+	"time"
 
-  "github.com/gootsolution/pushbell"
+	"github.com/gootsolution/pushbell"
 )
 
 func main() {
-  applicationServerPrivateKey := "QxfAyO5dMMrSvDT2_xHxW5aktYPWGE_hT42RKlHilpQ"
-  applicationServerPublicKey := "BIRM67G3W1fva-ephDo220BbiaOOy-SBk2uzHsmlqMXp_OmkKxYW96cOK5EWnKdkLg2i7N4FYfuxIwm7JWThVSY"
-  applicationServerSubject := "mailto:webpush@example.com"
+	applicationServerPrivateKey := "QxfAyO5dMMrSvDT2_xHxW5aktYPWGE_hT42RKlHilpQ"
+	applicationServerPublicKey := "BIRM67G3W1fva-ephDo220BbiaOOy-SBk2uzHsmlqMXp_OmkKxYW96cOK5EWnKdkLg2i7N4FYfuxIwm7JWThVSY"
+	applicationServerSubject := "mailto:webpush@example.com"
 
-  pb, err := pushbell.New(applicationServerPrivateKey, applicationServerPublicKey, applicationServerSubject)
-  if err != nil {
-    panic(err)
-  }
+	pb, err := pushbell.New(applicationServerPrivateKey, applicationServerPublicKey, applicationServerSubject)
+	if err != nil {
+		panic(err)
+	}
 
-  subscriptionEndpoint := "https://fcm.googleapis.com/fcm/send/e2CN0r8ft38:APA91bES3NaBHe_GgsRp_3Ir7f18L38wA5XYRoqZCbjMPEWnkKa07uxheWE5MGZncsPOr0_34zLaFljVqmNqW76KhPSrjdy_pdInnHPEIYAZpdcIYk8oIfo1F_84uKMSqIDXRhngL76S"
-  subscriptionAuth := "rm_owGF0xliyVXsrZk1LzQ"
-  subscriptionP256DH := "BKm5pKbGwkTxu7dJuuLyTCBOCuCi1Fs01ukzjUL5SEX1-b-filqeYASY6gy_QpPHGErGqAyQDYAtprNWYdcsM3Y"
+	subscriptionEndpoint := "https://fcm.googleapis.com/fcm/send/e2CN0r8ft38:APA91bES3NaBHe_GgsRp_3Ir7f18L38wA5XYRoqZCbjMPEWnkKa07uxheWE5MGZncsPOr0_34zLaFljVqmNqW76KhPSrjdy_pdInnHPEIYAZpdcIYk8oIfo1F_84uKMSqIDXRhngL76S"
+	subscriptionAuth := "rm_owGF0xliyVXsrZk1LzQ"
+	subscriptionP256DH := "BKm5pKbGwkTxu7dJuuLyTCBOCuCi1Fs01ukzjUL5SEX1-b-filqeYASY6gy_QpPHGErGqAyQDYAtprNWYdcsM3Y"
 
-  message := []byte("{\"title\": \"My first message\"}")
+	message := []byte("{\"title\": \"My first message\"}")
 
-  if err = pb.Send(
-    subscriptionEndpoint,
-    subscriptionAuth,
-    subscriptionP256DH,
-    message,
-    pushbell.UrgencyHigh,
-    time.Hour,
-  ); err != nil {
-    switch {
-    case errors.Is(err, pushbell.ErrPushGone):
-      log.Println(err)
-    default:
-      panic(err)
-    }
-  }
+	if err = pb.Send(
+		subscriptionEndpoint,
+		subscriptionAuth,
+		subscriptionP256DH,
+		message,
+		pushbell.UrgencyHigh,
+		time.Hour,
+	); err != nil {
+		switch {
+		case errors.Is(err, pushbell.ErrPushGone):
+			log.Println(err)
+		default:
+			panic(err)
+		}
+	}
 }
 ```
+
+**NOTE:** You can use [this](https://gootsolution.github.io/pushbell/) to play around and make tests without your
+service workers.
 
 ## Documentation
 
