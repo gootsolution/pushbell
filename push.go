@@ -1,5 +1,7 @@
 package pushbell
 
+import "time"
+
 type Urgency string
 
 const (
@@ -8,3 +10,12 @@ const (
 	UrgencyNormal  Urgency = "normal"   // Device State - On neither power nor Wi-Fi
 	UrgencyHigh    Urgency = "high"     // Device State - Low battery
 )
+
+type Push struct {
+	Endpoint  string
+	Auth      string
+	P256DH    string
+	Plaintext []byte
+	Urgency   Urgency
+	TTL       time.Duration
+}
