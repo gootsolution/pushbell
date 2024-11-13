@@ -9,4 +9,4 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/gootsolution/pushbell/v1)
+      - prefix(github.com/gootsolution/pushbell)

@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 
-	"github.com/gootsolution/pushbell/v1/internal/utils"
+	"github.com/gootsolution/pushbell/internal/utils"
 )
 
 func checkPublicKey(key string) error {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 
-	"github.com/gootsolution/pushbell/v1/internal/httpclient"
+	"github.com/gootsolution/pushbell/internal/httpclient"
 )
 
 type Options struct {
