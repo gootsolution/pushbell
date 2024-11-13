@@ -79,6 +79,7 @@ func (s *Service) Send(push *Push) (int, error) {
 		return statusCode, err
 	}
 
+	// Check status code if enabled.
 	if s.csc {
 		return statusCode, CheckStatusCode(statusCode)
 	}

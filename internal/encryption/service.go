@@ -15,7 +15,7 @@ type Service struct {
 	publicKey  []byte
 	privateKey *ecdh.PrivateKey
 
-	mu sync.RWMutex
+	mu *sync.RWMutex
 }
 
 func NewService() (*Service, error) {
