@@ -27,12 +27,12 @@ func NewService(options *Options) (*Service, error) {
 		options.ApplicationServerSubject,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create vapid service: %w", err)
 	}
 
 	encryptionService, err := encryption.NewService()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create encryption service: %w", err)
 	}
 
 	if options.KeyRotationInterval != 0 {
@@ -76,7 +76,7 @@ func (s *Service) Send(push *Push) (int, error) {
 	// Request delivery.
 	statusCode, err := s.client.RequestDelivery(push.Endpoint, headers, body)
 	if err != nil {
-		return statusCode, err
+		return statusCode, fmt.Errorf("failed to send push request: %w", err)
 	}
 
 	// Check status code if enabled.

@@ -7,6 +7,7 @@ import (
 	"crypto/ecdh"
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/gootsolution/pushbell/internal/utils"
 )
@@ -23,12 +24,12 @@ var (
 func (s *Service) prepareInputData(auth, p256dh string) ([]byte, []byte, error) {
 	authSecret, err := utils.ParseBase64Key(auth)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to decode auth secret: %w", err)
 	}
 
 	uaPublicKey, err := utils.ParseBase64Key(p256dh)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to decode user public key: %w", err)
 	}
 
 	return authSecret, uaPublicKey, nil
@@ -38,12 +39,12 @@ func (s *Service) prepareInputData(auth, p256dh string) ([]byte, []byte, error) 
 func (s *Service) ecdhExchange(uaPublicKey []byte) ([]byte, error) {
 	publicKey, err := ecdh.P256().NewPublicKey(uaPublicKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to pearse public key: %w", err)
 	}
 
 	sharedSecret, err := s.privateKey.ECDH(publicKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate shared secret: %w", err)
 	}
 
 	return sharedSecret, nil
@@ -64,7 +65,7 @@ func (s *Service) prepareIKM(sharedSecret, authSecret, uaPublicKey []byte) ([]by
 	// IKM = HKDF-Expand(PRK, key_info, 32)
 	ikm, err := utils.HkdfExtractAndExpand(32, sharedSecret, authSecret, keyInfo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to extract and expand HKDF ikm: %w", err)
 	}
 
 	return ikm, nil
@@ -75,7 +76,7 @@ func (s *Service) prepareSalt() ([]byte, error) {
 	salt := make([]byte, 0, 16)
 
 	if _, err := rand.Read(salt); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate salt: %w", err)
 	}
 
 	return salt, nil
@@ -90,7 +91,7 @@ func (s *Service) prepareNonceAndGCM(salt, ikm []byte) ([]byte, cipher.AEAD, err
 	// CEK = HMAC-SHA-256(PRK, cek_info || 0x01)[0..15]
 	cek, err := utils.HkdfExtractAndExpand(16, ikm, salt, cekInfo)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to extract and expand HKDF nonce: %w", err)
 	}
 
 	// Generate NONCE according to RFC8291 3.4:
@@ -100,19 +101,19 @@ func (s *Service) prepareNonceAndGCM(salt, ikm []byte) ([]byte, cipher.AEAD, err
 	// NONCE = HMAC-SHA-256(PRK, nonce_info || 0x01)[0..11]
 	nonce, err := utils.HkdfExtractAndExpand(12, ikm, salt, nonceInfo)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to extract and expand HKDF nonce: %w", err)
 	}
 
 	// Cipher block
 	c, err := aes.NewCipher(cek)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	// GCM encryptor
 	gcm, err := cipher.NewGCMWithNonceSize(c, 12)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
 	return nonce, gcm, nil

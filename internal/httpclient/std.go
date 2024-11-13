@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ func StdHttp(client *http.Client) *StdHttpClient {
 func (f *StdHttpClient) RequestDelivery(endpoint string, headers *Headers, body *bytes.Buffer) (int, error) {
 	req, err := http.NewRequest(http.MethodPost, endpoint, body)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/octet-stream")
@@ -40,7 +41,7 @@ func (f *StdHttpClient) RequestDelivery(endpoint string, headers *Headers, body 
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to send request: %w", err)
 	}
 
 	defer func(body io.ReadCloser) {

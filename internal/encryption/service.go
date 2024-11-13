@@ -21,7 +21,7 @@ type Service struct {
 func NewService() (*Service, error) {
 	privateKey, err := ecdh.P256().GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate private key: %v", err)
 	}
 
 	publicKey := privateKey.PublicKey().Bytes()
@@ -79,15 +79,12 @@ func (s *Service) Rotate(interval time.Duration) {
 	go func(s *Service) {
 		ticker := time.NewTicker(interval)
 
-		for {
-			select {
-			case <-ticker.C:
-				s.mu.Lock()
-				privateKey, _ := ecdh.P256().GenerateKey(rand.Reader)
-				s.privateKey = privateKey
-				s.publicKey = privateKey.PublicKey().Bytes()
-				s.mu.Unlock()
-			}
+		for range ticker.C {
+			s.mu.Lock()
+			privateKey, _ := ecdh.P256().GenerateKey(rand.Reader)
+			s.privateKey = privateKey
+			s.publicKey = privateKey.PublicKey().Bytes()
+			s.mu.Unlock()
 		}
 	}(s)
 }

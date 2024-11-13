@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -30,7 +31,13 @@ func ParseBase64Key(keyString string) ([]byte, error) {
 		return nil, errors.New("invalid base64 string")
 	}
 
-	return enc.DecodeString(keyString)
+	data, err := enc.DecodeString(keyString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode: %w", err)
+	}
+
+	return data, nil
+
 }
 
 func HkdfExtractAndExpand(length int, secret, salt, info []byte) ([]byte, error) {
@@ -39,7 +46,7 @@ func HkdfExtractAndExpand(length int, secret, salt, info []byte) ([]byte, error)
 	reader := hkdf.New(sha256.New, secret, salt, info)
 
 	if _, err := io.ReadFull(reader, buf); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read: %w", err)
 	}
 
 	return buf, nil

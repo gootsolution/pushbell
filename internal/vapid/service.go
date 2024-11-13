@@ -47,7 +47,7 @@ func NewService(publicKey, privateKey, subject string) (*Service, error) {
 func (s *Service) Header(endpoint string) (string, error) {
 	uri, err := url.Parse(endpoint)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse endpoint: %w", err)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.RegisteredClaims{
@@ -58,7 +58,7 @@ func (s *Service) Header(endpoint string) (string, error) {
 
 	tokenSigned, err := token.SignedString(s.privateKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
 	return fmt.Sprintf(headerTemplate, tokenSigned, s.publicKey), nil
