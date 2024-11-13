@@ -25,12 +25,18 @@
         </div>
     </form>
 
-    <div id="output" class="mt-6 p-4 bg-gray-100 border border-gray-300 rounded-md min-h-[50px] text-gray-700">
+    <p id="output" class="mt-6 p-4 bg-gray-100 border border-gray-300 rounded-md min-h-[50px] text-gray-700 break-all">
         Your subscription info will be here...
-    </div>
+    </p>
 </div>
 
 <script>
+    function base64UrlToUint8Array(base64Url) {
+        const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
+        const base64 = (base64Url + padding).replace(/-/g, "+").replace(/_/g, "/");
+        return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    }
+
     const form = document.getElementById("form")
     const output = document.getElementById('output');
 
@@ -47,7 +53,7 @@
         }
 
         subscription = await registration.pushManager.subscribe({
-            applicationServerKey: asKey.toString(),
+            applicationServerKey: base64UrlToUint8Array(asKey.toString()),
             userVisibleOnly: true
         })
 

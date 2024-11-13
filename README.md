@@ -1,8 +1,9 @@
-![GitHub Tag](https://img.shields.io/github/v/tag/gootsolution/pushbell?style=flat)
+# pushbell
+
+![GitHub Release](https://img.shields.io/github/v/release/gootsolution/pushbell)
 ![GitHub License](https://img.shields.io/github/license/gootsolution/pushbell)
 ![Go Report Card](https://goreportcard.com/badge/github.com/gootsolution/pushbell)
-
-# pushbell
+[![Lint & Test](https://github.com/gootsolution/pushbell/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/gootsolution/pushbell/actions/workflows/lint-and-test.yml)
 
 pushbell is a Go library for sending web push notifications with support
 for the VAPID (Voluntary Application Server Identification) specification.
@@ -12,11 +13,9 @@ for the VAPID (Voluntary Application Server Identification) specification.
 - Full implementation of the [encryption](https://datatracker.ietf.org/doc/html/rfc8291)
   and [Web Push](https://datatracker.ietf.org/doc/html/rfc8030) specification,
   including [VAPID](https://datatracker.ietf.org/doc/html/rfc8292).
-- Support for multiple push services (Firefox, Chrome, etc.)
-- Use [fasthttp](https://github.com/valyala/fasthttp) client
-- Simple and intuitive API
-- Error handling and retries on failures
-- Compatibility with different Go versions
+- Support for multiple push services (Firefox, Chrome, etc.).
+- Use [fasthttp](https://github.com/valyala/fasthttp) client.
+- Simple and intuitive API.
 
 ## Installation
 
@@ -30,19 +29,16 @@ go get -u github.com/gootsolution/pushbell
 package main
 
 import (
-	"errors"
-	"log"
-	"time"
-
 	"github.com/gootsolution/pushbell"
 )
 
 func main() {
 	applicationServerPrivateKey := "QxfAyO5dMMrSvDT2_xHxW5aktYPWGE_hT42RKlHilpQ"
 	applicationServerPublicKey := "BIRM67G3W1fva-ephDo220BbiaOOy-SBk2uzHsmlqMXp_OmkKxYW96cOK5EWnKdkLg2i7N4FYfuxIwm7JWThVSY"
-	applicationServerSubject := "mailto:webpush@example.com"
 
-	pb, err := pushbell.New(applicationServerPrivateKey, applicationServerPublicKey, applicationServerSubject)
+	opts := pushbell.NewOptions().ApplyKeys(applicationServerPublicKey, applicationServerPrivateKey)
+
+	pb, err := pushbell.NewService(opts)
 	if err != nil {
 		panic(err)
 	}
@@ -53,22 +49,17 @@ func main() {
 
 	message := []byte("{\"title\": \"My first message\"}")
 
-	if err = pb.Send(
-		subscriptionEndpoint,
-		subscriptionAuth,
-		subscriptionP256DH,
-		message,
-		pushbell.UrgencyHigh,
-		time.Hour,
-	); err != nil {
-		switch {
-		case errors.Is(err, pushbell.ErrPushGone):
-			log.Println(err)
-		default:
-			panic(err)
-		}
+	statusCode, err := pb.Send(&pushbell.Push{
+		Endpoint:  subscriptionEndpoint,
+		Auth:      subscriptionAuth,
+		P256DH:    subscriptionP256DH,
+		Plaintext: message,
+	})
+	if err != nil {
+		panic(err)
 	}
 }
+
 ```
 
 **NOTE:** You can use [this](https://gootsolution.github.io/pushbell/) to play around and make tests without your

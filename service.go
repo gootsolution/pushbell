@@ -5,67 +5,84 @@
 package pushbell
 
 import (
-	"context"
-	"log"
-	"log/slog"
-	"time"
+	"fmt"
+
+	"github.com/gootsolution/pushbell/internal/encryption"
+	"github.com/gootsolution/pushbell/internal/httpclient"
+	"github.com/gootsolution/pushbell/internal/vapid"
 )
 
 type Service struct {
-	vapid      *vapid
-	encryption *encryption
+	encryption *encryption.Service
+	vapid      *vapid.Service
+	client     httpclient.Client
+	csc        bool
 }
 
-// New creates new service with given application server keys and subject.
-func New(asPrivateKey, asPublicKey, asSubject string) (*Service, error) {
-	v, err := newVAPID(asPrivateKey, asPublicKey, asSubject)
+// NewService creates new service with given application server keys and subject.
+func NewService(options *Options) (*Service, error) {
+	vapidService, err := vapid.NewService(
+		options.ApplicationServerPublicKey,
+		options.ApplicationServerPrivateKey,
+		options.ApplicationServerSubject,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create vapid service: %w", err)
 	}
 
-	e, err := newEncryption()
+	encryptionService, err := encryption.NewService()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create encryption service: %w", err)
+	}
+
+	if options.KeyRotationInterval != 0 {
+		encryptionService.Rotate(options.KeyRotationInterval)
+	}
+
+	client := options.HttpClient
+	if client == nil {
+		client = httpclient.FastHttp(nil)
 	}
 
 	return &Service{
-		encryption: e,
-		vapid:      v,
+		encryption: encryptionService,
+		vapid:      vapidService,
+		client:     client,
+		csc:        options.CheckStatusCode,
 	}, nil
 }
 
-func (s *Service) Send(endpoint, auth, p256dh string, message []byte, urgency Urgency, ttl time.Duration) error {
-	body, err := s.encryption.encryptMessage(auth, p256dh, message)
+// Send sends a WebPush notification with parameters to the specified endpoint.
+func (s *Service) Send(push *Push) (int, error) {
+	// Cipher text.
+	body, err := s.encryption.Encrypt(push.Auth, push.P256DH, push.Plaintext)
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("failed to encrypt push body: %w", err)
 	}
 
-	if err = s.sendMessage(endpoint, urgency, ttl, body); err != nil {
-		return err
+	// Get auth header.
+	authHeader, err := s.vapid.Header(push.Endpoint)
+	if err != nil {
+		return 0, fmt.Errorf("failed to generate vapid auth header: %w", err)
 	}
 
-	return nil
-}
+	// Prepare headers for client.
+	headers := &httpclient.Headers{
+		Authorization: authHeader,
+		Urgency:       string(push.Urgency),
+		TTL:           push.TTL,
+	}
 
-func (s *Service) WithRotation(ctx context.Context, duration time.Duration, logger *slog.Logger) {
-	ticker := time.NewTicker(duration)
+	// Request delivery.
+	statusCode, err := s.client.RequestDelivery(push.Endpoint, headers, body)
+	if err != nil {
+		return statusCode, fmt.Errorf("failed to send push request: %w", err)
+	}
 
-	go func(ctx context.Context, ticker *time.Ticker) {
-		for {
-			select {
-			case <-ticker.C:
-				if err := s.encryption.rotate(); err != nil {
-					if logger != nil {
-						log.Printf("error while rotating keys: %v", err)
-					} else {
-						logger.Error("error while rotating keys", slog.String("err", err.Error()))
-					}
-				}
-			case <-ctx.Done():
-				ticker.Stop()
+	// Check status code if enabled.
+	if s.csc {
+		return statusCode, CheckStatusCode(statusCode)
+	}
 
-				return
-			}
-		}
-	}(ctx, ticker)
+	return statusCode, nil
 }

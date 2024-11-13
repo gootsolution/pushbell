@@ -20,7 +20,7 @@ jobs:
       - name: upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './web'
+          path: './pages'
       - name: deploy to github pages
         uses: actions/deploy-pages@v4
 
