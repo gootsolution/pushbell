@@ -7,9 +7,9 @@ package pushbell
 import (
 	"fmt"
 
-	"github.com/gootsolution/pushbell/internal/encryption"
-	"github.com/gootsolution/pushbell/internal/httpclient"
-	"github.com/gootsolution/pushbell/internal/vapid"
+	"github.com/gootsolution/pushbell/v1/internal/encryption"
+	"github.com/gootsolution/pushbell/v1/internal/httpclient"
+	"github.com/gootsolution/pushbell/v1/internal/vapid"
 )
 
 type Service struct {

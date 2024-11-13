@@ -1,4 +1,4 @@
-module github.com/gootsolution/pushbell
+module github.com/gootsolution/pushbell/v1
 
 go 1.23
 
