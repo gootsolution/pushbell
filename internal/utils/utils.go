@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -16,19 +15,18 @@ func ParseBase64Key(keyString string) ([]byte, error) {
 
 	var enc *base64.Encoding
 
-	switch {
-	case strings.ContainsAny(keyString, "+/"):
-		enc = base64.RawStdEncoding
-		if padded {
-			enc = base64.StdEncoding
-		}
-	case strings.ContainsAny(keyString, "-_"):
-		enc = base64.RawURLEncoding
+	if strings.ContainsAny(keyString, "-_") {
 		if padded {
 			enc = base64.URLEncoding
+		} else {
+			enc = base64.RawURLEncoding
 		}
-	default:
-		return nil, errors.New("invalid base64 string")
+	} else {
+		if padded {
+			enc = base64.StdEncoding
+		} else {
+			enc = base64.RawStdEncoding
+		}
 	}
 
 	data, err := enc.DecodeString(keyString)
@@ -37,7 +35,6 @@ func ParseBase64Key(keyString string) ([]byte, error) {
 	}
 
 	return data, nil
-
 }
 
 func HkdfExtractAndExpand(length int, secret, salt, info []byte) ([]byte, error) {
