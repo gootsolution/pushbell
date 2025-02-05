@@ -29,6 +29,7 @@ func NewService() (*Service, error) {
 	return &Service{
 		publicKey:  publicKey,
 		privateKey: privateKey,
+		mu:         new(sync.RWMutex),
 	}, nil
 }
 
