@@ -49,7 +49,7 @@ func main() {
 
 	message := []byte("{\"title\": \"My first message\"}")
 
-	statusCode, err := pb.Send(&pushbell.Push{
+	err = pb.Send(&pushbell.Push{
 		Endpoint:  subscriptionEndpoint,
 		Auth:      subscriptionAuth,
 		P256DH:    subscriptionP256DH,
