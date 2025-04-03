@@ -67,7 +67,7 @@ service workers.
 
 ## Documentation
 
-Detailed API documentation is available on GoDoc.
+Detailed API documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/gootsolution/pushbell).
 
 ## License
 
