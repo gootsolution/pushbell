@@ -9,7 +9,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/gootsolution/pushbell/internal/utils"
+	"github.com/gootsolution/pushbell/pkg/utils"
 )
 
 var (

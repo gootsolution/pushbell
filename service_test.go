@@ -21,7 +21,7 @@ func ExampleNewService() {
 	subscriptionP256DH := "BKm5pKbGwkTxu7dJuuLyTCBOCuCi1Fs01ukzjUL5SEX1-b-filqeYASY6gy_QpPHGErGqAyQDYAtprNWYdcsM3Y"
 	message := []byte("{\"title\": \"My first message\"}")
 
-	statusCode, err := pb.Send(&Push{
+	err = pb.Send(&Push{
 		Endpoint:  subscriptionEndpoint,
 		Auth:      subscriptionAuth,
 		P256DH:    subscriptionP256DH,
@@ -30,9 +30,9 @@ func ExampleNewService() {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrPushGone):
-			log.Println(statusCode, err)
+			log.Println("user unsubscribed")
 		default:
-			panic(err)
+			log.Println(err)
 		}
 	}
 }

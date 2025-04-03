@@ -1,4 +1,4 @@
-// Package pushbell provides function for sending web push notifications with
+// Package pushbell provides functions for sending web push notifications with
 // support for the VAPID (Voluntary Application Server Identification)
 // specification.
 
@@ -7,16 +7,17 @@ package pushbell
 import (
 	"fmt"
 
-	"github.com/gootsolution/pushbell/internal/encryption"
-	"github.com/gootsolution/pushbell/internal/httpclient"
-	"github.com/gootsolution/pushbell/internal/vapid"
+	"github.com/gootsolution/pushbell/pkg/encryption"
+	"github.com/gootsolution/pushbell/pkg/httpclient"
+	"github.com/gootsolution/pushbell/pkg/vapid"
 )
 
+// Service contains all dependencies needed for sending web push notifications.
 type Service struct {
-	encryption *encryption.Service
-	vapid      *vapid.Service
-	client     httpclient.Client
-	csc        bool
+	Encryption               *encryption.Service
+	Vapid                    *vapid.Service
+	Client                   httpclient.Client
+	StatusCodeValidationFunc StatusCodeValidationFunc
 }
 
 // NewService creates new service with given application server keys and subject.
@@ -45,25 +46,25 @@ func NewService(options *Options) (*Service, error) {
 	}
 
 	return &Service{
-		encryption: encryptionService,
-		vapid:      vapidService,
-		client:     client,
-		csc:        options.CheckStatusCode,
+		Encryption:               encryptionService,
+		Vapid:                    vapidService,
+		Client:                   client,
+		StatusCodeValidationFunc: options.StatusCodeValidationFunc,
 	}, nil
 }
 
 // Send sends a WebPush notification with parameters to the specified endpoint.
-func (s *Service) Send(push *Push) (int, error) {
+func (s *Service) Send(push *Push) error {
 	// Cipher text.
-	body, err := s.encryption.Encrypt(push.Auth, push.P256DH, push.Plaintext)
+	body, err := s.Encryption.Encrypt(push.Auth, push.P256DH, push.Plaintext)
 	if err != nil {
-		return 0, fmt.Errorf("failed to encrypt push body: %w", err)
+		return fmt.Errorf("failed to encrypt push body: %w", err)
 	}
 
 	// Get auth header.
-	authHeader, err := s.vapid.Header(push.Endpoint)
+	authHeader, err := s.Vapid.Header(push.Endpoint)
 	if err != nil {
-		return 0, fmt.Errorf("failed to generate vapid auth header: %w", err)
+		return fmt.Errorf("failed to generate vapid auth header: %w", err)
 	}
 
 	// Prepare headers for client.
@@ -74,15 +75,15 @@ func (s *Service) Send(push *Push) (int, error) {
 	}
 
 	// Request delivery.
-	statusCode, err := s.client.RequestDelivery(push.Endpoint, headers, body)
+	statusCode, err := s.Client.RequestDelivery(push.Endpoint, headers, body)
 	if err != nil {
-		return statusCode, fmt.Errorf("failed to send push request: %w", err)
+		return fmt.Errorf("failed to send push request: %w", err)
 	}
 
 	// Check status code if enabled.
-	if s.csc {
-		return statusCode, CheckStatusCode(statusCode)
+	if s.StatusCodeValidationFunc != nil {
+		return s.StatusCodeValidationFunc(statusCode)
 	}
 
-	return statusCode, nil
+	return nil
 }
