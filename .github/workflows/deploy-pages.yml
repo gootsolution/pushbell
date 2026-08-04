@@ -1,4 +1,4 @@
-name: deploy pages
+name: Deploy Pages
 on:
   push:
     branches:
@@ -23,4 +23,3 @@ jobs:
           path: '.github/pages'
       - name: deploy to github pages
         uses: actions/deploy-pages@v4
-
